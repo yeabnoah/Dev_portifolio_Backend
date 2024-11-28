@@ -20,7 +20,7 @@ model Text {
 }
 
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
   emailVerified Boolean
@@ -29,9 +29,71 @@ model User {
   updatedAt     DateTime
   Session       Session[]
   Account       Account[]
+  Info          Info?
+  Article       Article[]
+  Testimonial   Testimonial[]
+  Project       Project[]
 
   @@unique([email])
   @@map("user")
+}
+
+model Info {
+  id       Int    @id @default(autoincrement())
+  mainRole String
+  moto     String
+  github   String
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  Links    Links?
+
+  @@unique([userId])
+}
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  tags        String[]
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Testimonial {
+  id        Int    @id @default(autoincrement())
+  name      String
+  testimony String
+  orgName   String
+  role      String
+  imageUrl  String
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  imageUrl    String
+  description String
+  githubUrl   String
+  liveLink    String
+  tags        String[]
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Links {
+  id       Int    @id @default(autoincrement())
+  linkedIn String
+  x        String
+  github   String
+  telegram String
+  website  String
+  email    String
+  infoId   Int
+  info     Info   @relation(fields: [infoId], references: [id])
+
+  @@unique([infoId])
 }
 
 model Session {
