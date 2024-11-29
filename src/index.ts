@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import { auth } from './lib/auth';
-import homeRouter from './constants/routes/home';
-import userRouter from './constants/routes/user';
-import aboutRouter from './constants/routes/about';
-import projectRoute from './constants/routes/project';
+import homeRouter from './routes/home';
+import userRouter from './routes/user';
+import aboutRouter from './routes/about';
+import projectRoute from './routes/project';
+import articleRoute from './routes/article';
 
 
 const app = new Hono()
@@ -24,6 +25,6 @@ app.route("/home", homeRouter)
 app.route("/user", userRouter)
 app.route("/about", aboutRouter)
 app.route("/projects", projectRoute)
-
+app.route("/article", articleRoute)
 
 export default app

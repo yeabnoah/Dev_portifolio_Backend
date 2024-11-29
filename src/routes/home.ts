@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import homeDummy from "../home";
+import homeDummy from "../constants/home";
 
 const homeRouter = new Hono()
 

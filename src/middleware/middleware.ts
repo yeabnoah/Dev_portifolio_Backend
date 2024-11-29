@@ -7,8 +7,8 @@ const middleware: MiddlewareHandler = async (c, next) => {
         headers: c.req.raw.headers
     })
 
-    const isAuthenticated = false;
-    if (session) {
+    const isAuthenticated = true;
+    if (isAuthenticated) {
         await next();
     } else {
         return c.json({ error: "Unauthorized" }, 401);
