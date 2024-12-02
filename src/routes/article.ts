@@ -4,13 +4,13 @@ import getAllArticles from "../controllers/article/getAllArticles";
 import getSingleArticle from "../controllers/article/getSingleArticle";
 import updateArticle from "../controllers/article/updateArticle";
 import deleteArticle from "../controllers/article/deleteArticle";
+import middleware from "../middleware/middleware";
 
 const articleRoute = new Hono()
+articleRoute.use(middleware)
 
-articleRoute.get("/read/:userid", getAllArticles)
-articleRoute.post("/create/", createArticle)
-articleRoute.get("/article/userid/id", getSingleArticle)
-articleRoute.patch("/update/:id", updateArticle)
-articleRoute.delete("/delete/:id", deleteArticle)
+articleRoute.post("/", createArticle)
+articleRoute.patch("/:id", updateArticle)
+articleRoute.delete("/:id", deleteArticle)
 
 export default articleRoute

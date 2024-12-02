@@ -1,14 +1,12 @@
 import { Hono } from "hono";
 import homeDummy from "../constants/home";
+import middleware from "../middleware/middleware";
 
 const homeRouter = new Hono()
+homeRouter.use(middleware)
 
-homeRouter.get("/", (c) => {
-    return c.json(homeDummy)
-})
-
-homeRouter.post("/", async (c) => {
-    const { } = await c.req.json()
+homeRouter.patch("/", async (c) => {
+    const { github, name, mainRole, moto, homeImageUrl} = await c.req.json()
 })
 
 

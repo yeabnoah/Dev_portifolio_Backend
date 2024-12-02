@@ -9,8 +9,7 @@ import middleware from "../middleware/middleware";
 const projectRoute = new Hono()
 projectRoute.use(middleware)
 
-projectRoute.get("/:id", getAllProjects)
-projectRoute.get("/project/:userId/:id", getSingleProject)
+
 projectRoute.post("/", createNewProject)
 projectRoute.patch("/:id", updateProject)
 projectRoute.delete("/:id", deleteProject)

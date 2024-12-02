@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -33,19 +27,42 @@ model User {
   Article       Article[]
   Testimonial   Testimonial[]
   Project       Project[]
+  skill         Skill[]
+
 
   @@unique([email])
   @@map("user")
 }
 
+enum Word {
+  Developer
+  Engineer
+}
+
+
+model Skill {
+  id        Int @id @default(autoincrement())
+  name      String
+  imageUrl  String
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+}
+
+
 model Info {
   id       Int    @id @default(autoincrement())
-  mainRole String
-  moto     String
-  github   String
-  userId   String
+  mainRole String @default("Full stack Developer")
+  moto     String @default("I create full-stack products that people love, with a focus on user experience and scalable architecture.")
+  github   String 
+  word   Word
+  homeImageUrl String @default("https://static7.tgstat.ru/channels/_0/bc/bc8ed4944ea88e1bdf520898b60b5ac6.jpg")
+  aboutImageUrl String @default("https://static7.tgstat.ru/channels/_0/bc/bc8ed4944ea88e1bdf520898b60b5ac6.jpg")
+  aboutDescription String @default("I’m a passionate developer with a diverse skill set spanning DevOps, Web3, and full-stack development. My expertise includes automating infrastructure with Terraform, Docker, Kubernetes, and CI/CD pipelines, as well as developing decentralized applications on Ethereum and Solana. I’ve worked on projects ranging from blockchain wallet integrations to building serverless platforms and AI-driven apps. and I enjoy tackling complex problems in both backend and front-end development.")
+  
+  userId   String 
   user     User   @relation(fields: [userId], references: [id])
   Links    Links?
+
 
   @@unique([userId])
 }
@@ -84,13 +101,12 @@ model Project {
 
 model Links {
   id       Int    @id @default(autoincrement())
-  linkedIn String
-  x        String
-  github   String
-  telegram String
-  website  String
-  email    String
-  infoId   Int
+  linkedIn String @default("https://www.linkedin.com/in/yeabsra-ashebir-tech-nerd-8a3a80267/")
+  x        String @default("x.com/technerd556")
+  github   String @default("github.com/yeabnoah")
+  telegram String @default("t.me/technerd345")
+  website  String @default("https://technerd.345")
+  infoId   Int 
   info     Info   @relation(fields: [infoId], references: [id])
 
   @@unique([infoId])

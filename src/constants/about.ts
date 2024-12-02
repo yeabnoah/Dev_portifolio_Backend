@@ -1,4 +1,4 @@
-import AboutInterface from "../src/interface/about_Interface";
+import AboutInterface from "../interface/about_Interface"
 
 const AboutDummy = <AboutInterface>{
     Description: "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...",
