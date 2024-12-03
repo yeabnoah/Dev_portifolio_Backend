@@ -8,7 +8,6 @@ const createArticle = async (c: Context) => {
     const body =  <ArticleInterface>await c.req.json()
     const user = await getUser(c)
 
-
     const newArticleDone = await prisma.article.create({
       data: {
         title: body.title,
