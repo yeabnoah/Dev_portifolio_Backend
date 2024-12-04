@@ -8,7 +8,6 @@ const createTestimony = async(c:Context) =>{
     try{
         const body = <TestimonyInterface> await c.req.json()
         const user = await getUser(c)
-    
         const createdTestimony = await prisma.testimonial.create({
             data : {
                 name : body.name,
