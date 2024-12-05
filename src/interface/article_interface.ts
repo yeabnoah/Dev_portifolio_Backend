@@ -1,7 +1,7 @@
 interface ArticleInterface {
-    title: string,
-    description: string,
-    tags: string[],
+  title: string;
+  description: string;
+  tags: string[];
 }
 
-export default ArticleInterface
+export default ArticleInterface;

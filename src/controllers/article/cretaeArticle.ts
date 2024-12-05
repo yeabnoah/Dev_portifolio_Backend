@@ -5,8 +5,8 @@ import getUser from "../../utils/user";
 
 const createArticle = async (c: Context) => {
   try {
-    const body =  <ArticleInterface>await c.req.json()
-    const user = await getUser(c)
+    const body = <ArticleInterface>await c.req.json();
+    const user = await getUser(c);
 
     const newArticleDone = await prisma.article.create({
       data: {
@@ -22,8 +22,8 @@ const createArticle = async (c: Context) => {
   }
 };
 
-const message = () => {
-  console.log("this is a typing test for my self ");
-};
+// const message = () => {
+//   console.log("this is a typing test for my self ");
+// };
 
 export default createArticle;

@@ -1,9 +1,9 @@
 interface LinkInterface {
-    linkedIn : string,
-    x : string,
-    github : string,
-    telegram : string,
-    website : string,
+  linkedIn: string;
+  x: string;
+  github: string;
+  telegram: string;
+  website: string;
 }
 
-export default LinkInterface
+export default LinkInterface;
