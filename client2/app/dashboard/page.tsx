@@ -14,9 +14,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { toast } from "@/components/ui/use-toast";
+import authClient from "@/lib/auth-client";
 
 export default function ProfilePage() {
+  const session = authClient.useSession();
+
   const [profile, setProfile] = useState({
     name: "John Doe",
     email: "john@example.com",
@@ -35,11 +37,6 @@ export default function ProfilePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send this data to your backend
-    // toast({
-    //   title: "Profile Updated",
-    //   description: "Your profile information has been successfully updated.",
-    // });
   };
 
   return (
@@ -47,7 +44,7 @@ export default function ProfilePage() {
       <h1 className="text-3xl font-bold">User Profile</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Edit Profile</CardTitle>
+          <CardTitle>Edit Profile {session.data?.user.name}</CardTitle>
           <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
         <CardContent>

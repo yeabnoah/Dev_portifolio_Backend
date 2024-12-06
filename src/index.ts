@@ -11,12 +11,20 @@ import linkRoute from "./routes/links";
 import publicLink from "./routes/public/link";
 import testimonyRouter from "./routes/testimony";
 import publicTestimony from "./routes/public/testimony";
+import { cors } from "hono/cors";
 
 const app = new Hono();
-// app.use();
+app.use(
+  "/",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE"],
+    exposeHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.get("/api/auth/*", (c) => auth.handler(c.req.raw));
-app.post("/api/auth/*", (c) => auth.handler(c.req.raw));
+app.get("/api/auth/*", cors(), (c) => auth.handler(c.req.raw));
+app.post("/api/auth/*", cors(), (c) => auth.handler(c.req.raw));
 
 // base test api
 app.get("/", (c) => {

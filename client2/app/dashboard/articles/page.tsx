@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -16,9 +16,11 @@ interface ArticleInterface {
   title: string;
   description: string;
   tags: string[];
+  userId?: string;
 }
 
 export default function ArticlesPage() {
+  const session = authClient.getSession();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [newArticle, setNewArticle] = useState<ArticleInterface>({
     id: "",
@@ -29,14 +31,15 @@ export default function ArticlesPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const session = authClient.useSession();
-
   const { data: articles, refetch } = useQuery({
     queryKey: ["articles"],
     queryFn: async () => {
-      const response = await axios.get(`${backendUrl}/articles`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${backendUrl}/public/articles/${(await session).data?.user.id}`,
+        {
+          withCredentials: true,
+        }
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -68,7 +71,7 @@ export default function ArticlesPage() {
   const { isPending, mutate } = useMutation({
     mutationFn: async (article: ArticleInterface) => {
       const response = await axios.post(
-        `${backendUrl}/public/articles/${session.data?.user.id}`,
+        `${backendUrl}/article`,
         { data: article },
         {
           withCredentials: true,
@@ -79,10 +82,35 @@ export default function ArticlesPage() {
     onSuccess: () => {
       toast.success("Article published successfully!");
       setNewArticle({ id: "", title: "", description: "", tags: [] });
-      refetch(); // Re-fetch articles after a successful
+      refetch();
     },
     onError: () => {
       toast.error("Failed to publish the article.");
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (article: ArticleInterface) => {
+      const { id, userId, ...articleData } = article;
+
+      // Send only the article data without the id
+      const response = await axios.patch(
+        `${backendUrl}/article/${id}`,
+        articleData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Article updated successfully!");
+      setNewArticle({ id: "", title: "", description: "", tags: [] });
+      refetch();
+    },
+    onError: () => {
+      toast.error("Failed to update the article.");
     },
   });
 
@@ -91,14 +119,14 @@ export default function ArticlesPage() {
       const response = await axios.delete(
         `${backendUrl}/article/${articleId}`,
         {
-          withCredentials: true, // Ensures cookies are sent with the request
+          withCredentials: true,
         }
       );
       return response.data;
     },
     onSuccess: () => {
       toast.success("Article deleted successfully!");
-      refetch(); // Re-fetch articles after a successful delete
+      refetch();
     },
     onError: () => {
       toast.error("Failed to delete the article.");
@@ -107,7 +135,6 @@ export default function ArticlesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add validation here if needed
     if (
       !newArticle.title ||
       !newArticle.description ||
@@ -120,22 +147,27 @@ export default function ArticlesPage() {
       });
       return;
     }
-    mutate(newArticle);
+
+    if (newArticle.id) {
+      editMutation.mutate(newArticle);
+    } else {
+      mutate(newArticle);
+    }
   };
 
   const handleEdit = (article: ArticleInterface) => {
-    setNewArticle(article); // Populate the form with article data
+    setNewArticle(article);
   };
 
   const handleDelete = (articleId: string) => {
-    deleteMutation.mutate(articleId); // Delete the article
+    deleteMutation.mutate(articleId);
   };
 
   return (
     <div className="space-y-6 w-full">
       <h1 className="text-3xl font-bold">Articles</h1>
       <div className="card">
-        <h2>Create New Article</h2>
+        <h2>{newArticle.id ? "Edit Article" : "Create New Article"}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
@@ -166,7 +198,7 @@ export default function ArticlesPage() {
                   ["code-block"],
                 ],
               }}
-              theme="snow" // Theme for ReactQuill
+              theme="snow"
             />
             {errors.description && (
               <p className="text-red-500 text-sm">{errors.description}</p>
@@ -186,13 +218,19 @@ export default function ArticlesPage() {
             )}
           </div>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Publishing..." : "Publish Article"}
+            {isPending
+              ? newArticle.id
+                ? "Updating..."
+                : "Publishing..."
+              : newArticle.id
+              ? "Update Article"
+              : "Publish Article"}
           </Button>
         </form>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold">Published Articles</h2>
+      <div className="mt-8 border-white p-3 rounded">
+        <h2 className="text-2xl font-bold my-5">Published Articles</h2>
         {articles && articles.length === 0 ? (
           <p>No articles available.</p>
         ) : (
@@ -200,7 +238,7 @@ export default function ArticlesPage() {
             {articles?.map((article: ArticleInterface) => (
               <li
                 key={article.id}
-                className="flex justify-between items-center mb-4"
+                className="flex justify-between items-center mb-4 border-white/25 border-[1px] rounded-md p-5"
               >
                 <div>
                   <h3 className="text-xl">{article.title}</h3>
@@ -208,15 +246,21 @@ export default function ArticlesPage() {
                   <p className="text-sm text-gray-500">
                     {article.tags.join(", ")}
                   </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => handleEdit(article)}>Edit</Button>
-                  <Button
-                    onClick={() => handleDelete(article.id)}
-                    variant="destructive"
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex gap-2 my-2">
+                    <Button
+                      className="py-2 px-5"
+                      onClick={() => handleEdit(article)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      className="py-2 px-5"
+                      onClick={() => handleDelete(article.id)}
+                      variant="destructive"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </li>
             ))}
