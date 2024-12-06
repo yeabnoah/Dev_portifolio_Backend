@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import prisma from "../../lib/prisma";
+import prisma from "../../lib/db";
 
 const getTestimony = async (c: Context) => {
   try {

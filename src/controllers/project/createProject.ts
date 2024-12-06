@@ -1,13 +1,12 @@
 import { Context } from "hono";
 import projectInterface from "../../interface/project_Interface";
-import prisma from "../../lib/prisma";
+import prisma from "../../lib/db";
 import getUser from "../../utils/user";
 
 const createNewProject = async (c: Context) => {
   try {
     const bodyInput = <projectInterface>await c.req.json();
-    const user = await getUser(c)
-   
+    const user = await getUser(c);
 
     const newProject = await prisma.project.create({
       data: {

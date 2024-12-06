@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import prisma from "../../lib/prisma";
+import prisma from "../../lib/db";
 import getUser from "../../utils/user";
 
 const deleteLink = async (c: Context) => {
@@ -14,11 +14,11 @@ const deleteLink = async (c: Context) => {
 
     const linkToDelete = await prisma.links.findUnique({
       where: { id: linkId },
-      include : {
-          info : {
-            select : {userId : true}
-          }
-      }
+      include: {
+        info: {
+          select: { userId: true },
+        },
+      },
     });
 
     if (!linkToDelete) {

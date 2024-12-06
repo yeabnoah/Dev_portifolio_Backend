@@ -1,15 +1,14 @@
 import { Hono } from "hono";
-import prisma from "../lib/prisma";
+import prisma from "../lib/db";
 
-const userRouter = new Hono()
+const userRouter = new Hono();
 
 userRouter.get("/", async (c) => {
+  const user = await prisma.user.findUnique({
+    where: { id: "EmR0RqlZ6Zjs38vMeuR8D" },
+  });
 
-    const user = await prisma.user.findUnique({
-        where: { id: "EmR0RqlZ6Zjs38vMeuR8D" }
-    })
+  return c.json(user);
+});
 
-    return c.json(user)
-})
-
-export default userRouter
+export default userRouter;

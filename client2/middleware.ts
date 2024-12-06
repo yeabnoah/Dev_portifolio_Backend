@@ -22,9 +22,10 @@ export default async function authMiddleware(request: NextRequest) {
   if (session && (pathname === "/" || pathname === "/auth/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard", "/", "/auth/register"],
+  matcher: ["/dashboard/:path*", "/", "/auth/register"],
 };

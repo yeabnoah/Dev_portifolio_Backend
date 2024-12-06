@@ -43,7 +43,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 w-[400px]">
+    <div className="space-y-6 ">
       <h1 className="text-3xl font-bold">User Profile</h1>
       <Card>
         <CardHeader>
