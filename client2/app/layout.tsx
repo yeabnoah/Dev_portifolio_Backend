@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`${spaceGrotesk.variable} antialiased min-h-screen w-full bg-white dark:bg-background`}
+        className={`${spaceGrotesk.variable}  antialiased min-h-screen w-full bg-white dark:bg-background`}
       >
         <QueryProvider>
           <ThemeProvider

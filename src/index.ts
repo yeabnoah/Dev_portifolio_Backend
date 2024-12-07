@@ -12,6 +12,7 @@ import publicLink from "./routes/public/link";
 import testimonyRouter from "./routes/testimony";
 import publicTestimony from "./routes/public/testimony";
 import { cors } from "hono/cors";
+import resoursesRoute from "./routes/resources";
 
 const app = new Hono();
 app.use(
@@ -38,6 +39,7 @@ app.route("/projects", projectRoute);
 app.route("/article", articleRoute);
 app.route("/links", linkRoute);
 app.route("/testimony", testimonyRouter);
+app.route("/resource", resoursesRoute);
 
 //public api's
 app.route("/public/projects", publicProject);

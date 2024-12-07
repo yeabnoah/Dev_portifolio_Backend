@@ -14,7 +14,7 @@ export default function DashboardLayout({
         <DashboardSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <MobileHeader />
-          <main className="flex-1 w-2/3 overflow-y-auto bg-background p-4 md:p-8">
+          <main className="flex-1 w-full overflow-y-auto bg-background p-4 md:p-8">
             <ThemeToggle />
             {children}
           </main>

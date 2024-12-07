@@ -43,8 +43,7 @@ const navItems = [
   { icon: Briefcase, label: "Skills", href: "/dashboard/skills" },
   { icon: Info, label: "About", href: "/dashboard/about" },
   { icon: Link, label: "Links", href: "/dashboard/links" },
-  { icon: User, label: "Profile", href: "/dashboard/profile" },
-  { icon: Settings, label: "Settings", href: "/dashboard" },
+  { icon: User, label: "Profile", href: "/dashboard/" },
 ];
 
 export function DashboardSidebar() {

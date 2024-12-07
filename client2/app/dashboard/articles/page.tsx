@@ -22,6 +22,7 @@ interface ArticleInterface {
 export default function ArticlesPage() {
   const session = authClient.getSession();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   const [newArticle, setNewArticle] = useState<ArticleInterface>({
     id: "",
     title: "",
@@ -242,7 +243,9 @@ export default function ArticlesPage() {
               >
                 <div>
                   <h3 className="text-xl">{article.title}</h3>
-                  <p>{article.description}</p>
+                  <p
+                    dangerouslySetInnerHTML={{ __html: article.description }}
+                  />
                   <p className="text-sm text-gray-500">
                     {article.tags.join(", ")}
                   </p>

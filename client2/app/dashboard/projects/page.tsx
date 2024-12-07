@@ -9,11 +9,12 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { toast } from "@/components/ui/use-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import authClient from "@/lib/auth-client";
 
 interface ProjectInterface {
   id: number;
@@ -24,19 +25,15 @@ interface ProjectInterface {
   liveLink: string;
   tags: string[];
 }
+import strShorten from "str_shorten";
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<ProjectInterface[]>([
-    {
-      id: 1,
-      imageUrl: "/placeholder.svg?height=100&width=100",
-      description: "A sample project",
-      name: "Sample Project",
-      githubUrl: "https://github.com/sample/project",
-      liveLink: "https://sample-project.com",
-      tags: ["react", "typescript"],
-    },
-  ]);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+  const cloudinaryUploadUrl = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_URL!;
+  const cloudinaryUploadPreset =
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
+  const session = authClient.useSession();
+  const queryClient = useQueryClient();
 
   const [newProject, setNewProject] = useState<ProjectInterface>({
     id: 0,
@@ -46,6 +43,67 @@ export default function ProjectsPage() {
     githubUrl: "",
     liveLink: "",
     tags: [],
+  });
+
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const {
+    data: projects,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryFn: async () => {
+      const response = await axios.get(
+        `${backendUrl}/public/projects/${session.data?.user.id}`
+      );
+      return response.data;
+    },
+    queryKey: ["projects"],
+    enabled: !!session.data?.user.id, // Fetch immediately if user ID is available
+  });
+
+  const saveProjectMutation = useMutation({
+    mutationFn: async (project: ProjectInterface) => {
+      let imageUrl = project.imageUrl;
+
+      // Upload the image to Cloudinary if a new file was selected
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("upload_preset", cloudinaryUploadPreset);
+
+        try {
+          const response = await axios.post(cloudinaryUploadUrl, formData);
+          imageUrl = response.data.secure_url;
+        } catch (error) {
+          console.error("Image upload failed:", error);
+          throw new Error("Image upload failed");
+        }
+      }
+
+      if (editingProjectId) {
+        return await axios.patch(
+          `${backendUrl}/projects/${editingProjectId}`,
+          { ...project, imageUrl },
+          { withCredentials: true }
+        );
+      } else {
+        return await axios.post(
+          `${backendUrl}/projects`,
+          { ...project, imageUrl },
+          { withCredentials: true }
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      resetForm();
+    },
+    onError: (error) => {
+      console.error("Error saving project:", error);
+    },
   });
 
   const handleInputChange = (
@@ -60,13 +118,33 @@ export default function ProjectsPage() {
     setNewProject((prev) => ({ ...prev, tags }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+
+      // Generate a local preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const project: ProjectInterface = {
-      ...newProject,
-      id: Date.now(),
-    };
-    setProjects((prev) => [...prev, project]);
+    saveProjectMutation.mutate({ ...newProject });
+  };
+
+  const handleEdit = (project: ProjectInterface) => {
+    setNewProject(project);
+    setEditingProjectId(project.id);
+    setPreviewUrl(project.imageUrl);
+    setSelectedFile(null);
+  };
+
+  const resetForm = () => {
     setNewProject({
       id: 0,
       imageUrl: "",
@@ -76,24 +154,54 @@ export default function ProjectsPage() {
       liveLink: "",
       tags: [],
     });
-    // toast({
-    //   title: "Project Created",
-    //   description: "Your project has been successfully created.",
-    // });
+    setEditingProjectId(null);
+    setPreviewUrl(null);
+    setSelectedFile(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this project?")) return;
+
+    try {
+      await axios.delete(`${backendUrl}/projects/${id}`, {
+        withCredentials: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+    }
   };
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Projects</h1>
 
-      <Card>
+      <Card className=" md:max-w-[60vw] w-full">
         <CardHeader>
-          <CardTitle>Add New Project</CardTitle>
-          <CardDescription>Create a new project entry</CardDescription>
+          <CardTitle className="text-lg">
+            {editingProjectId ? "Edit Project" : "Add New Project"}
+          </CardTitle>
+          <CardDescription className="text-sm">
+            {editingProjectId
+              ? "Update your project details"
+              : "Create a new project entry"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="imageUrl">Project Image</Label>
+              <Input type="file" onChange={handleFileChange} />
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  alt="Image Preview"
+                  className="w-full h-40 object-cover rounded-md mt-2"
+                />
+              )}
+            </div>
+
+            <div className="space-y-1">
               <Label htmlFor="name">Project Name</Label>
               <Input
                 id="name"
@@ -103,7 +211,8 @@ export default function ProjectsPage() {
                 required
               />
             </div>
-            <div className="space-y-2">
+
+            <div className="space-y-1">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
@@ -113,55 +222,38 @@ export default function ProjectsPage() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                name="imageUrl"
-                value={newProject.imageUrl}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="githubUrl">GitHub URL</Label>
-              <Input
-                id="githubUrl"
-                name="githubUrl"
-                value={newProject.githubUrl}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="liveLink">Live Link</Label>
-              <Input
-                id="liveLink"
-                name="liveLink"
-                value={newProject.liveLink}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
+
+            <div className="space-y-1">
               <Label htmlFor="tags">Tags (comma-separated)</Label>
               <Input
                 id="tags"
                 name="tags"
                 value={newProject.tags.join(", ")}
                 onChange={handleTagsChange}
+                className="h-8 py-5"
               />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="submit" disabled={saveProjectMutation.isPending}>
+                {editingProjectId ? "Update Project" : "Add Project"}
+              </Button>
+              {editingProjectId && (
+                <Button type="button" variant="secondary" onClick={resetForm}>
+                  Cancel Edit
+                </Button>
+              )}
             </div>
           </form>
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleSubmit}>Add Project</Button>
-        </CardFooter>
       </Card>
 
+      {isLoading && <p>Loading projects...</p>}
+      {isError && <p>Error loading projects.</p>}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => (
-          <Card key={project.id}>
+        {projects?.map((project: ProjectInterface) => (
+          <Card key={project.id} className=" p-0">
             <CardHeader>
               <CardTitle>{project.name}</CardTitle>
             </CardHeader>
@@ -172,7 +264,7 @@ export default function ProjectsPage() {
                 className="w-full h-40 object-cover mb-4 rounded-md"
               />
               <p className="text-sm text-muted-foreground mb-2">
-                {project.description}
+                {strShorten(project.description, 400)}
               </p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {project.tags.map((tag, index) => (
@@ -185,22 +277,15 @@ export default function ProjectsPage() {
                 ))}
               </div>
               <div className="flex gap-2">
-                <a
-                  href={project.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:underline"
+                <Button variant="secondary" onClick={() => handleEdit(project)}>
+                  Edit
+                </Button>
+                <Button
+                  className=" bg-red-500 text-white hover:bg-red-600 "
+                  onClick={() => handleDelete(project.id)}
                 >
-                  GitHub
-                </a>
-                <a
-                  href={project.liveLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  Live Demo
-                </a>
+                  Delete
+                </Button>
               </div>
             </CardContent>
           </Card>

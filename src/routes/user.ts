@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import prisma from "../lib/db";
+import getUser from "../utils/user";
+import getUserData from "../controllers/user/getUser";
+import updateUser from "../controllers/user/updateUser";
 
 const userRouter = new Hono();
 
-userRouter.get("/", async (c) => {
-  const user = await prisma.user.findUnique({
-    where: { id: "EmR0RqlZ6Zjs38vMeuR8D" },
-  });
+userRouter.get("/", getUserData);
 
-  return c.json(user);
-});
+userRouter.patch("/", updateUser);
+userRouter.delete("/:id");
 
 export default userRouter;

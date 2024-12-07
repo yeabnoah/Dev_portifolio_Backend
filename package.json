@@ -7,6 +7,7 @@
     "@prisma/client": "^5.22.0",
     "@types/draft-js": "^0.11.18",
     "better-auth": "^1.0.5",
+    "cloudinary": "^2.5.1",
     "draft-js": "^0.11.7",
     "hono": "^4.6.12",
     "prisma": "^5.22.0",
