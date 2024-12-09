@@ -9,7 +9,7 @@ const updateProject = async (c: Context) => {
     const user = await getUser(c);
 
     const updatedProject = await prisma.project.update({
-      where: { id: id, userId: user.id },
+      where: { id: id, userId: user?.id },
       data: updatedFields,
     });
     return c.json(updatedProject, 200);

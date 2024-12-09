@@ -11,7 +11,7 @@ const updateSkill = async (c: Context) => {
     const updatedSkill = await prisma.skill.update({
       where: {
         id: id,
-        userId: user.id,
+        userId: user?.id,
       },
       data: updatedFields,
     });

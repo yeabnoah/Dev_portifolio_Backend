@@ -25,7 +25,7 @@ const deleteLink = async (c: Context) => {
       return c.json({ error: "Link not found" }, 404);
     }
 
-    if (linkToDelete.info.userId !== user.id) {
+    if (linkToDelete.info.userId !== user?.id) {
       return c.json({ error: "Unauthorized to delete this link" }, 403);
     }
 

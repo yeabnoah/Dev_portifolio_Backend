@@ -69,7 +69,7 @@ export default function TestimonialsPage() {
 
       if (id) {
         // Update existing testimonial
-        return axios.put(`${backendUrl}/testimony/${id}`, restTestimonial, {
+        return axios.patch(`${backendUrl}/testimony/${id}`, restTestimonial, {
           withCredentials: true,
         });
       } else {

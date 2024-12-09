@@ -10,7 +10,7 @@ const deleteTestimony = async (c: Context) => {
     const testimonyDeleted = await prisma.testimonial.delete({
       where: {
         id: id,
-        userId: user.id,
+        userId: user?.id,
       },
     });
     return c.json(testimonyDeleted, 200);

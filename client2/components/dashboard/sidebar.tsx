@@ -95,7 +95,7 @@ export function DashboardSidebar() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src="/placeholder.svg?height=32&width=32"
+                          src="/nerd.png?height=32&width=32"
                           alt="User"
                         />
                         <AvatarFallback>U</AvatarFallback>

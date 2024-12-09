@@ -11,7 +11,7 @@ const updateTestimony = async (c: Context) => {
     const updatedTestimony = await prisma.testimonial.update({
       where: {
         id: id,
-        userId: user.id,
+        userId: user?.id,
       },
       data: updatedFields,
     });

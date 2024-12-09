@@ -13,6 +13,8 @@ import testimonyRouter from "./routes/testimony";
 import publicTestimony from "./routes/public/testimony";
 import { cors } from "hono/cors";
 import resoursesRoute from "./routes/resources";
+import skillRoute from "./routes/skill";
+import publicSkill from "./routes/public/skill";
 
 const app = new Hono();
 app.use(
@@ -40,11 +42,13 @@ app.route("/article", articleRoute);
 app.route("/links", linkRoute);
 app.route("/testimony", testimonyRouter);
 app.route("/resource", resoursesRoute);
+app.route("/skills", skillRoute);
 
 //public api's
 app.route("/public/projects", publicProject);
 app.route("/public/articles", publicArticle);
 app.route("/public/links", publicLink);
 app.route("/public/testimony", publicTestimony);
+app.route("/public/skills", publicSkill);
 
 export default app;

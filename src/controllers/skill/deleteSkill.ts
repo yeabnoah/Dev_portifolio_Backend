@@ -9,7 +9,7 @@ const deleteSkill = async (c: Context) => {
 
     const skillDeleted = await prisma.skill.delete({
       where: {
-        userId: user.id,
+        userId: user?.id,
         id: id,
       },
     });

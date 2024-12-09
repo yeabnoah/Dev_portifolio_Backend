@@ -9,7 +9,7 @@ const createLink = async (c: Context) => {
     const user = await getUser(c);
 
     const info = await prisma.info.findUnique({
-      where: { userId: user.id },
+      where: { userId: user?.id },
     });
 
     const createdLink = await prisma.links.create({

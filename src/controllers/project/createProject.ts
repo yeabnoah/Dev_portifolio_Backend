@@ -16,7 +16,7 @@ const createNewProject = async (c: Context) => {
         githubUrl: bodyInput.githubUrl,
         liveLink: bodyInput.liveLink,
         tags: bodyInput.tags,
-        userId: user.id,
+        userId: user?.id,
       },
     });
 

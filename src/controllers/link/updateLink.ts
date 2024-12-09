@@ -1,13 +1,18 @@
 import { Context } from "hono";
-import LinkInterface from "../../interface/link_interface";
+import { Links } from "@prisma/client";
 import getUser from "../../utils/user";
 import prisma from "../../lib/db";
+import { connect } from "bun";
 
 const updateLink = async (c: Context) => {
   try {
-    const body = await c.req.json();
+    const { github, linkedIn, x, website, telegram } = await c.req.json();
     const user = await getUser(c);
     const id = Number(await c.req.param("id"));
+
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
 
     const infoData = await prisma.info.findUnique({
       where: {
@@ -15,22 +20,28 @@ const updateLink = async (c: Context) => {
       },
     });
 
-    const updatedLink = await prisma.links.update({
+    if (!infoData) {
+      return c.json({ error: "User info not found" }, 404);
+    }
+
+    const updatedLink: Links = await prisma.links.update({
       where: {
         id: id,
-        infoId: infoData?.id,
+        infoId: infoData.id,
       },
-      data: body,
+      data: {
+        github,
+        linkedIn,
+        x,
+        website,
+        telegram,
+      },
     });
 
     return c.json(updatedLink, 200);
   } catch (err) {
-    return c.json(
-      {
-        error: err,
-      },
-      500
-    );
+    console.error(err);
+    return c.json({ error: "Internal server error" }, 500);
   }
 };
 

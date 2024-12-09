@@ -14,7 +14,7 @@ const createSkill = async (c: Context) => {
         imageUrl: body.imageUrl,
         user: {
           connect: {
-            id: user.id,
+            id: user?.id,
           },
         },
       },

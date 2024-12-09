@@ -10,7 +10,7 @@ const deleteArticle = async (c: Context) => {
     const deletedArticle = await prisma.article.delete({
       where: {
         id: id,
-        userId: user.id,
+        userId: user?.id,
       },
     });
     return c.json(deletedArticle, 200);
