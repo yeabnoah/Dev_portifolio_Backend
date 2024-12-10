@@ -1,46 +1,56 @@
 import { Context } from "hono";
-import { Links } from "@prisma/client";
-import getUser from "../../utils/user";
 import prisma from "../../lib/db";
-import { connect } from "bun";
+import getUser from "../../utils/user";
 
 const updateLink = async (c: Context) => {
   try {
-    const { github, linkedIn, x, website, telegram } = await c.req.json();
+    const { github, linkedIn, x, telegram } = await c.req.json();
     const user = await getUser(c);
-    const id = Number(await c.req.param("id"));
 
     if (!user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const infoData = await prisma.info.findUnique({
-      where: {
-        userId: user.id,
-      },
+    let infoData = await prisma.info.findUnique({
+      where: { userId: user.id },
     });
 
     if (!infoData) {
-      return c.json({ error: "User info not found" }, 404);
+      infoData = await prisma.info.create({
+        data: {
+          userId: user.id,
+          github: "https://github.com/yeabnoah",
+          word: "Developer",
+        },
+      });
     }
 
-    const updatedLink: Links = await prisma.links.update({
-      where: {
-        id: id,
-        infoId: infoData.id,
-      },
+    let linksData = await prisma.links.findUnique({
+      where: { infoId: infoData.id },
+    });
+
+    if (!linksData) {
+      return c.json(
+        {
+          message: "error happened",
+        },
+        500
+      );
+    }
+
+    const linksDataFinal = await prisma.links.update({
+      where: { infoId: infoData.id },
       data: {
-        github,
-        linkedIn,
-        x,
-        website,
-        telegram,
+        github: github,
+        linkedIn: linkedIn,
+        x: x,
+        telegram: telegram,
       },
     });
 
-    return c.json(updatedLink, 200);
+    return c.json({ links: linksDataFinal }, 200);
   } catch (err) {
-    console.error(err);
+    console.error("Error updating links:", err);
     return c.json({ error: "Internal server error" }, 500);
   }
 };

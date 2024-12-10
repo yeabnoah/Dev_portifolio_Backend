@@ -17,7 +17,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import authClient from "@/lib/auth-client";
 
-// Defining TypeScript interface for Testimonial
 interface Testimonial {
   id: number;
   name: string;
@@ -43,13 +42,14 @@ export default function TestimonialsPage() {
     orgName: "",
     role: "",
     imageUrl: "",
-    userId: session.data?.user.id ?? "", // User ID set from session
+    userId: session.data?.user.id ?? "",
   });
 
   const {
     data: testimonials,
     isLoading,
     isError,
+    refetch,
   } = useQuery<Testimonial[]>({
     queryKey: ["testimonials"],
     queryFn: async () => {
@@ -59,21 +59,18 @@ export default function TestimonialsPage() {
       );
       return response.data;
     },
-    enabled: !!session.data?.user.id,
+    enabled: false,
   });
 
-  // Create or Update Testimonial Mutation
   const saveTestimonialMutation = useMutation({
     mutationFn: async (testimonial: Testimonial) => {
       const { id, ...restTestimonial } = testimonial;
 
       if (id) {
-        // Update existing testimonial
         return axios.patch(`${backendUrl}/testimony/${id}`, restTestimonial, {
           withCredentials: true,
         });
       } else {
-        // Create new testimonial
         return axios.post(`${backendUrl}/testimony`, restTestimonial, {
           withCredentials: true,
         });
@@ -85,7 +82,6 @@ export default function TestimonialsPage() {
     },
   });
 
-  // Delete Testimonial Mutation
   const deleteTestimonialMutation = useMutation({
     mutationFn: async (id: number) => {
       return axios.delete(`${backendUrl}/testimony/${id}`, {
@@ -109,7 +105,7 @@ export default function TestimonialsPage() {
     if (file) {
       setNewTestimonial((prev) => ({
         ...prev,
-        imageUrl: URL.createObjectURL(file), // Image preview
+        imageUrl: URL.createObjectURL(file),
       }));
     }
   };
@@ -143,9 +139,22 @@ export default function TestimonialsPage() {
     setEditingTestimonialId(null);
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Testimonials</h1>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Testimonials</h1>
+      <h1 className="text-2xl font-bold">Manage Testimonials</h1>
+
+      <Button onClick={() => refetch()} disabled={isLoading}>
+        Fetch My Content
+      </Button>
 
       <Card className="md:max-w-[60vw] w-full">
         <CardHeader>
@@ -217,6 +226,16 @@ export default function TestimonialsPage() {
               />
             </div>
 
+            {newTestimonial.imageUrl && (
+              <div className="mt-2">
+                <img
+                  src={newTestimonial.imageUrl}
+                  alt="Image Preview"
+                  className="w-32 h-32 object-cover rounded-full"
+                />
+              </div>
+            )}
+
             <CardFooter className="gap-3">
               <Button
                 type="submit"
@@ -233,9 +252,6 @@ export default function TestimonialsPage() {
           </form>
         </CardContent>
       </Card>
-
-      {isLoading && <p>Loading testimonials...</p>}
-      {isError && <p>Error loading testimonials.</p>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {testimonials?.map((testimonial) => (

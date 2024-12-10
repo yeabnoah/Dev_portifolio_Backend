@@ -49,10 +49,12 @@ export default function ProjectsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Set enabled to false so the data is not fetched on page load
   const {
     data: projects,
     isLoading,
     isError,
+    refetch,
   } = useQuery({
     queryFn: async () => {
       const response = await axios.get(
@@ -61,14 +63,13 @@ export default function ProjectsPage() {
       return response.data;
     },
     queryKey: ["projects"],
-    enabled: !!session.data?.user.id, // Fetch immediately if user ID is available
+    enabled: false, // Prevent fetching on page load
   });
 
   const saveProjectMutation = useMutation({
     mutationFn: async (project: ProjectInterface) => {
       let imageUrl = project.imageUrl;
 
-      // Upload the image to Cloudinary if a new file was selected
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
@@ -172,9 +173,23 @@ export default function ProjectsPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">About Me</h1>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Projects</h1>
+
+      {/* Button to trigger manual fetching */}
+      <Button onClick={() => refetch()} disabled={isLoading}>
+        Fetch My Content
+      </Button>
 
       <Card className=" md:max-w-[60vw] w-full">
         <CardHeader>

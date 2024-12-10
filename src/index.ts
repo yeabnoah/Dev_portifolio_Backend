@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { auth } from "./lib/auth";
-import homeRouter from "./routes/home";
+import homeRouter from "./routes/info";
 import userRouter from "./routes/user";
 import aboutRouter from "./routes/about";
 import projectRoute from "./routes/project";
@@ -15,6 +15,8 @@ import { cors } from "hono/cors";
 import resoursesRoute from "./routes/resources";
 import skillRoute from "./routes/skill";
 import publicSkill from "./routes/public/skill";
+import infoRouter from "./routes/info";
+import publicInfo from "./routes/public/info";
 
 const app = new Hono();
 app.use(
@@ -43,6 +45,7 @@ app.route("/links", linkRoute);
 app.route("/testimony", testimonyRouter);
 app.route("/resource", resoursesRoute);
 app.route("/skills", skillRoute);
+app.route("/info", infoRouter);
 
 //public api's
 app.route("/public/projects", publicProject);
@@ -50,5 +53,6 @@ app.route("/public/articles", publicArticle);
 app.route("/public/links", publicLink);
 app.route("/public/testimony", publicTestimony);
 app.route("/public/skills", publicSkill);
+app.route("/public/info", publicInfo);
 
 export default app;

@@ -1,9 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,158 +8,211 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import linkSchema from "@/validation/links";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import authClient from "@/lib/auth-client";
-
-interface LinkInterface {
-  id?: string;
-  linkedIn: string;
-  x: string;
-  github: string;
-  telegram: string;
-  website: string;
-}
+import { FaLinkedin, FaTelegram, FaGithub, FaTwitter } from "react-icons/fa";
+import { useEffect } from "react";
 
 const LinksPage = () => {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  type LinkType = z.infer<typeof linkSchema>;
+  const backendurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const session = authClient.useSession();
+  const queryClient = useQueryClient();
 
-  const [links, setLinks] = useState<LinkInterface>({
-    linkedIn: "",
-    x: "",
-    github: "",
-    telegram: "",
-    website: "",
-  });
-
-  const fetchLinks = async () => {
-    try {
-      const { data } = await axios.get(
-        `${backendUrl}/public/links/${session.data?.user.id}`,
+  const {
+    data: fetchedLinks,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["links", session.data?.user.id],
+    queryFn: async () => {
+      if (!session.data?.user.id) return;
+      const response = await axios.get(
+        `${backendurl}/public/links/${session.data.user.id}`,
         { withCredentials: true }
       );
-      return {
-        id: data.id || "",
-        linkedIn: data.linkedin || "",
-        x: data.x || "",
-        github: data.github || "",
-        telegram: data.telegram || "",
-        website: data.website || "",
-      };
-    } catch (error) {
-      console.error("Error fetching links:", error);
-      return {
-        linkedIn: "",
-        x: "",
-        github: "",
-        telegram: "",
-        website: "",
-      };
-    }
-  };
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["links"],
-    queryFn: fetchLinks,
-    enabled: !!session.data,
+      return response.data;
+    },
+    enabled: !!session.data?.user.id,
   });
 
-  const createLinks = async (newLinks: LinkInterface) => {
-    const { id, ...newLinkFinal } = newLinks;
-    const res = await axios.post(`${backendUrl}/links`, newLinkFinal, {
-      withCredentials: true,
-    });
-    return res.data;
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<LinkType>({
+    resolver: zodResolver(linkSchema),
+    defaultValues: {
+      linkedIn: "",
+      telegram: "",
+      github: "",
+      x: "",
+    },
+  });
 
-  const updateLinks = async (updatedLinks: LinkInterface) => {
-    const { id, ...updatedLinksFinal } = updatedLinks;
-    const res = await axios.patch(
-      `${backendUrl}/links/${updatedLinks.id}`,
-      updatedLinksFinal,
-      { withCredentials: true }
-    );
-    return res.data;
-  };
+  useEffect(() => {
+    if (fetchedLinks?.links) {
+      reset(fetchedLinks.links);
+    }
+  }, [fetchedLinks, reset]);
 
-  const updateMutation = useMutation({
-    mutationFn: (links: LinkInterface) =>
-      links.id ? updateLinks(links) : createLinks(links),
+  const mutation = useMutation({
+    mutationFn: async (data: LinkType) => {
+      const url = `${backendurl}/links`;
+      if (fetchedLinks) {
+        await axios.patch(url, data, { withCredentials: true });
+      } else {
+        await axios.post(url, data, { withCredentials: true });
+      }
+    },
     onSuccess: () => {
-      alert("Links updated successfully!");
-    },
-    onError: (error) => {
-      console.error("Error updating links:", error);
-      alert("Failed to update links");
+      queryClient.invalidateQueries({
+        queryKey: ["links", session.data?.user.id],
+      });
     },
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setLinks((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (session.data) {
-      const userId = session.data.user.id;
-      updateMutation.mutate({ ...links, id: links.id || userId });
+  const onSubmit: SubmitHandler<LinkType> = async (data) => {
+    try {
+      await mutation.mutateAsync(data);
+    } catch (err) {
+      console.error("Submission error:", err);
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error loading links</div>;
+  const SocialLinkInput = ({
+    label,
+    name,
+    placeholder,
+  }: {
+    label: string;
+    name: keyof LinkType;
+    placeholder: string;
+  }) => (
+    <Label>
+      {label}
+      <Input
+        className={`my-2 ${errors[name] && "border-red-500"}`}
+        type="text"
+        placeholder={placeholder}
+        {...register(name)}
+      />
+      {errors[name] && (
+        <span className="text-red-500">{errors[name]?.message}</span>
+      )}
+    </Label>
+  );
+
+  const renderLinkPreview = (
+    label: string,
+    url: string,
+    Icon: React.ComponentType
+  ) => {
+    if (!url) return null;
+    return (
+      <div className="flex items-center space-x-2">
+        <Icon />
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600"
+        >
+          {label}
+        </a>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Social Links</h1>
 
+      <Button onClick={() => refetch()} disabled={isLoading}>
+        Fetch My Content
+      </Button>
+
       <Card>
         <CardHeader>
-          <CardTitle>Edit Social Links</CardTitle>
+          <CardTitle>
+            {fetchedLinks ? "Edit Social Links" : "Add Social Links"}
+          </CardTitle>
           <CardDescription>
-            Update your social media and contact links
+            {fetchedLinks
+              ? "Update your social media and contact links."
+              : "Add your social media and contact links."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {Object.keys(links)
-              .filter((key) => key !== "id")
-              .map((key) => (
-                <div key={key} className="space-y-2">
-                  <Label htmlFor={key}>
-                    {key.charAt(0).toUpperCase() + key.slice(1)}
-                  </Label>
-                  <Input
-                    id={key}
-                    name={key}
-                    value={links[key as keyof LinkInterface]}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              ))}
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Updating..." : "Update Links"}
+          {isLoading && <p>Loading...</p>}
+          {isError && <p className="text-red-500">Error: {error.message}</p>}
+          <form
+            className="my-5 flex flex-col gap-5"
+            onSubmit={handleSubmit(onSubmit)}
+          >
+            <SocialLinkInput
+              label="LinkedIn"
+              name="linkedIn"
+              placeholder="LinkedIn"
+            />
+            <SocialLinkInput
+              label="Telegram"
+              name="telegram"
+              placeholder="Telegram"
+            />
+            <SocialLinkInput
+              label="GitHub"
+              name="github"
+              placeholder="GitHub"
+            />
+            <SocialLinkInput label="X" name="x" placeholder="X" />
+
+            <Button
+              className="mt-5"
+              type="submit"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending
+                ? "Saving..."
+                : fetchedLinks
+                ? "Update Links"
+                : "Create Links"}
             </Button>
           </form>
+
+          <div className="mt-6 space-y-4">
+            <h2 className="text-lg font-semibold">Preview Links</h2>
+            <div className="flex flex-row gap-5 items-start">
+              {renderLinkPreview(
+                "LinkedIn",
+                fetchedLinks?.links?.linkedIn,
+                FaLinkedin
+              )}
+              {renderLinkPreview(
+                "Telegram",
+                fetchedLinks?.links?.telegram,
+                FaTelegram
+              )}
+              {renderLinkPreview(
+                "GitHub",
+                fetchedLinks?.links?.github,
+                FaGithub
+              )}
+              {renderLinkPreview("X", fetchedLinks?.links?.x, FaTwitter)}
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <div>
-        <h2 className="text-xl font-semibold">Links</h2>
-        <ul>
-          {Object.entries(data || {})
-            .filter(([key]) => key !== "id")
-            .map(([key, value]) => (
-              <li key={key}>
-                {key.charAt(0).toUpperCase() + key.slice(1)}:{" "}
-                {value || "Not available"}
-              </li>
-            ))}
-        </ul>
-      </div>
     </div>
   );
 };

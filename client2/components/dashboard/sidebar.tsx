@@ -13,7 +13,7 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -30,9 +30,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import authClient from "@/lib/auth-client";
 
 const navItems = [
-  // { icon: BarChart, label: "Analytics", href: "/dashboard" },
   { icon: FileText, label: "Articles", href: "/dashboard/articles" },
   { icon: FolderKanban, label: "Projects", href: "/dashboard/projects" },
   {
@@ -49,10 +49,22 @@ const navItems = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
+  const router = useRouter();
 
-  const handleLogout = () => {
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    try {
+      const signout = await authClient.signOut();
+      if (signout.data?.success) {
+        router.push("/");
+      }
+
+      console.log("Logging out...");
+    } catch (err) {
+      alert("error while logging out");
+    }
   };
+
+  const session = authClient.useSession();
 
   return (
     <Sidebar className="border-r">
@@ -95,13 +107,21 @@ export function DashboardSidebar() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src="/nerd.png?height=32&width=32"
+                          src={
+                            session.data?.user.image
+                              ? (session.data?.user.image as string)
+                              : `/nerd.png?height=32&width=32`
+                          }
                           alt="User"
                         />
                         <AvatarFallback>U</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">John Doe</span>
+                        <span className="text-sm font-medium">
+                          {session.data?.user.name
+                            ? session.data?.user.name
+                            : "User Name"}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           Logout
                         </span>

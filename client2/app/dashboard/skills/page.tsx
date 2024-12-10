@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,8 @@ interface SkillInterface {
 export default function SkillsPage() {
   const backendurl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const session = authClient.useSession();
+  const queryClient = useQueryClient();
+
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState<SkillInterface>({
     id: 0,
@@ -55,7 +57,7 @@ export default function SkillsPage() {
       );
       return response.data;
     },
-    enabled: !!session.data?.user.id,
+    enabled: !!session.data?.user.id && false,
   });
 
   const addSkillMutation = useMutation({
@@ -115,11 +117,23 @@ export default function SkillsPage() {
     setSelectedTech(null);
   };
 
+  if (skillsLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">About Me</h1>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Select or Add a Skill</h1>
 
-      {/* Dropdown for Tech Options */}
+      <Button onClick={() => refetch()} disabled={skillsLoading}>
+        Fetch My Skills
+      </Button>
+
       <div className="max-w-xs">
         <Select onValueChange={handleTechSelect} value={selectedTech || ""}>
           <SelectTrigger>
